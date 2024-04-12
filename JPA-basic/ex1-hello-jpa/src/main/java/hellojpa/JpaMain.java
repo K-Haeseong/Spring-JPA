@@ -15,11 +15,18 @@ public class JpaMain {
         tx.begin();
 
         try {
-            Member member = new Member();
-            member.setId(1L);
-            member.setName("HelloJPA");
+//            Member member = new Member();
+//            member.setId(3L);
+//            member.setName("HelloC");
+//
+//            em.persist(member);
 
-            em.persist(member);
+            Member findMember = em.find(Member.class, 1L);
+            findMember.setName("JPA");
+
+            em.detach(findMember);
+
+            em.merge(findMember);
 
             tx.commit();
         } catch(Exception e) {
@@ -27,6 +34,7 @@ public class JpaMain {
         } finally {
             em.close();
         }
+
         emf.close();
 
     }
