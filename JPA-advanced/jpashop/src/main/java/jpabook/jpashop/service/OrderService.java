@@ -19,6 +19,7 @@ public class OrderService {
     private final ItemRepository itemRepository;
     
     /* 주문 생성 */
+    @Transactional
     public Long Order(Long memberId, Long itemId, int count) {
 
         Member findMember = memberRepository.findOne(memberId);
@@ -39,8 +40,10 @@ public class OrderService {
 
 
     /* 주문 취소 */
-    public void cancel() {
-
+    @Transactional
+    public void cancel(Long itemId) {
+        Order findOrder = orderRepository.findOne(itemId);
+        findOrder.cancel();
     }
     
     /* 특정 주문 검색 */
