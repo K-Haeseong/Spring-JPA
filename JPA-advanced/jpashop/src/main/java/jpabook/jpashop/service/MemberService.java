@@ -23,6 +23,7 @@ public class MemberService {
         return member.getId();
     }
 
+    /* 종복 회원 조회 */
     private void validateDuplicateMember(Member member) {
         List<Member> findMembers = memberRepository.findByName(member.getName());
         if( !findMembers.isEmpty() ) {
