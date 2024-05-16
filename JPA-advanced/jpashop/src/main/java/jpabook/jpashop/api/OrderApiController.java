@@ -2,6 +2,7 @@ package jpabook.jpashop.api;
 
 import jpabook.jpashop.domain.*;
 import jpabook.jpashop.repository.OrderRepository;
+import jpabook.jpashop.repository.order.query.OrderQueryDto;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -79,6 +80,26 @@ public class OrderApiController {
                 .map(order -> new OrderDto(order))
                 .collect(Collectors.toList());
 
+        return result;
+    }
+
+    /**
+     * V4. JPA에서 DTO로 바로 조회, 컬렉션 N 조회 (1 + N Query)
+     *  - 페이징 가능
+     */
+    @GetMapping("/api/v4/orders")
+    public List<OrderQueryDto> ordersV4() {
+        List<OrderQueryDto> result = orderRepository.findOrderQueryDtos();
+        return result;
+    }
+
+    /**
+     * V5. JPA에서 DTO로 바로 조회, 컬렉션 1 조회 최적화 버전 (1 + 1 Query)
+     *  - 페이징 가능
+     */
+    @GetMapping("/api/v5/orders")
+    public List<OrderQueryDto> ordersV5() {
+        List<OrderQueryDto> result = orderRepository.findAllByDto_optimization();
         return result;
     }
 
