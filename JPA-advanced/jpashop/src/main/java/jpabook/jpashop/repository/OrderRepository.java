@@ -5,7 +5,6 @@ import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 import jpabook.jpashop.domain.Member;
 import jpabook.jpashop.domain.Order;
-import jpabook.jpashop.domain.OrderItem;
 import jpabook.jpashop.domain.OrderSearch;
 import jpabook.jpashop.repository.order.query.OrderItemQueryDto;
 import jpabook.jpashop.repository.order.query.OrderQueryDto;
@@ -171,8 +170,6 @@ public class OrderRepository {
                 orderQueryDto.setOrderItems(orderItemMap.get(orderQueryDto.getOrderId())));
 
         return result;
-
-
     }
 
 
