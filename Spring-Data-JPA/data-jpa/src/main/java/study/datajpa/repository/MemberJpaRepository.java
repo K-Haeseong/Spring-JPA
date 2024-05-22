@@ -51,4 +51,20 @@ public class MemberJpaRepository {
                 .getSingleResult();
     }
 
+    /* 메서드 이름으로 쿼리 생성 */
+    /* 이름과 나이를 기준으로 회원을 조회 */
+    public List<Member> findByUsernameAndAgeGreaterThan(String name, int age) {
+        return em.createQuery("select m from Member m where m.username = :username and m.age > :age")
+                .setParameter("username", name)
+                .setParameter("age", age)
+                .getResultList();
+    }
+
+    /* Named 쿼리 호출 */
+    public List<Member> findByUsername(String username) {
+        return em.createNamedQuery("Member.findByUsername", Member.class)
+                .setParameter("username", username)
+                .getResultList();
+    }
+
 }

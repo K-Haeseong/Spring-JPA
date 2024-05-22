@@ -1,6 +1,7 @@
 package study.datajpa.repository;
 
 import org.assertj.core.api.Assertions;
+import org.hibernate.dialect.TiDBDialect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,23 +44,56 @@ public class MemberJpaRepositoryTest {
         Member findMember1 = memberJpaRepository.findById(member1.getId()).get();
         Member findMember2 = memberJpaRepository.findById(member2.getId()).get();
 
-        Assertions.assertThat(findMember1).isEqualTo(member1);
-        Assertions.assertThat(findMember2).isEqualTo(member2);
+        assertThat(findMember1).isEqualTo(member1);
+        assertThat(findMember2).isEqualTo(member2);
 
         // 리스트 조회 검증
         List<Member> members = memberJpaRepository.findAll();
-        Assertions.assertThat(members.size()).isEqualTo(2);
+        assertThat(members.size()).isEqualTo(2);
 
         // 카운트 검증
         long count = memberJpaRepository.count();
-        Assertions.assertThat(count).isEqualTo(2);
+        assertThat(count).isEqualTo(2);
 
         // 삭제 검증
         memberJpaRepository.delete(member1);
         memberJpaRepository.delete(member2);
 
         long deleteCount = memberJpaRepository.count();
-        Assertions.assertThat(deleteCount).isEqualTo(0);
+        assertThat(deleteCount).isEqualTo(0);
 
+    }
+    
+    @Test
+    @DisplayName("이름과 나이 조건 조회")
+    void findByUsernameAndAgeGreaterThan() {
+        //given
+        Member member1 = new Member("memberA", 15);
+        Member member2 = new Member("memberA", 30);
+
+        memberJpaRepository.save(member1);
+        memberJpaRepository.save(member2);
+
+        //when
+        List<Member> findMembers = memberJpaRepository.findByUsernameAndAgeGreaterThan("memberA", 20);
+
+        //then
+        assertThat(findMembers.get(0).getUsername()).isEqualTo("memberA");
+        assertThat(findMembers.get(0).getAge()).isEqualTo(30);
+        assertThat(findMembers.size()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Named 쿼리 사용")
+    void namedQuery() {
+        //given
+        Member member3 = new Member("memberB", 30);
+        memberJpaRepository.save(member3);
+
+        //when
+        List<Member> findMember = memberJpaRepository.findByUsername("memberB");
+
+        //then
+        assertThat(findMember.get(0).getUsername()).isEqualTo("memberB");
     }
 }

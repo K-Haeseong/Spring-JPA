@@ -5,11 +5,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 import study.datajpa.entity.Member;
 
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @Transactional
@@ -64,6 +67,55 @@ class MemberRepositoryTest {
 
         long deleteCount = memberRepository.count();
         Assertions.assertThat(deleteCount).isEqualTo(0);
+    }
 
+
+    @Test
+    @DisplayName("이름과 나이 조건 조회")
+    void findByUsernameAndAgeGreaterThan() {
+        //given
+        Member member1 = new Member("memberA", 15);
+        Member member2 = new Member("memberA", 30);
+        memberRepository.save(member1);
+        memberRepository.save(member2);
+
+        //when
+        List<Member> findMembers = memberRepository.findByUsernameAndAgeGreaterThan("memberA", 20);
+
+        //then
+        assertThat(findMembers.get(0).getUsername()).isEqualTo("memberA");
+        assertThat(findMembers.get(0).getAge()).isEqualTo(30);
+        assertThat(findMembers.size()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Named 쿼리 사용")
+    void namedQuery() {
+        //given
+        Member member3 = new Member("memberB", 30);
+        memberRepository.save(member3);
+
+        //when
+        List<Member> findMember = memberRepository.findByUsername("memberB");
+
+        //then
+        assertThat(findMember.get(0).getUsername()).isEqualTo("memberB");
+    }
+
+    /* @Query 사용 */
+    @Test
+    @DisplayName("@Query 사용")
+    void findUser()  {
+        //given
+        Member member3 = new Member("memberB", 30);
+        memberRepository.save(member3);
+
+        //when
+        List<Member> findMember = memberRepository.findUser("memberB", 30);
+
+        //then
+        assertThat(findMember.size()).isEqualTo(1);
+        assertThat(findMember.get(0).getUsername()).isEqualTo("memberB");
+        assertThat(findMember.get(0).getAge()).isEqualTo(30);
     }
 }
