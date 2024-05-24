@@ -2,6 +2,7 @@ package study.datajpa.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import org.springframework.stereotype.Repository;
 import study.datajpa.entity.Member;
 
@@ -54,7 +55,7 @@ public class MemberJpaRepository {
     /* 메서드 이름으로 쿼리 생성 */
     /* 이름과 나이를 기준으로 회원을 조회 */
     public List<Member> findByUsernameAndAgeGreaterThan(String name, int age) {
-        return em.createQuery("select m from Member m where m.username = :username and m.age > :age")
+        return em.createQuery("select m from Member m where m.username = :username and m.age > :age", Member.class)
                 .setParameter("username", name)
                 .setParameter("age", age)
                 .getResultList();
@@ -66,5 +67,30 @@ public class MemberJpaRepository {
                 .setParameter("username", username)
                 .getResultList();
     }
+
+    /* 페이징과 정렬 */
+    public List<Member> findByPage(int age, int offset, int limit) {
+        return em.createQuery("select m from Member m where age = :age order by m.username desc", Member.class)
+                .setParameter("age", age)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList();
+    }
+
+    public long totalCount(int age) {
+        return em.createQuery("select count(m) from Member m where age = :age", Long.class)
+                .setParameter("age", age)
+                .getSingleResult();
+    }
+
+
+    /* 벌크성 수정 쿼리 */
+    public int bulkAgePlus(int age) {
+        return em.createQuery("update Member m set m.age = m.age+1 where m.age >= :age")
+                .setParameter("age", age)
+                .executeUpdate();
+    }
+
+
 
 }
