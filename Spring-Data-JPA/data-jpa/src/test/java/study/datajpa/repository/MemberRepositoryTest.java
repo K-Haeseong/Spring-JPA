@@ -1,5 +1,7 @@
 package study.datajpa.repository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,9 @@ class MemberRepositoryTest {
     
     @Autowired
     MemberRepository memberRepository;
+
+    @PersistenceContext
+    EntityManager em;
     
     @Test
     @DisplayName("Data JPA 테스트")
@@ -166,4 +171,68 @@ class MemberRepositoryTest {
         assertThat(resultCount).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("CustomRepository")
+    void customRepository() throws Exception {
+        //given
+        memberRepository.save(new Member("member1", 10));
+        memberRepository.save(new Member("member2", 15));
+        memberRepository.save(new Member("member3", 20));
+
+        //when
+        List<Member> findMembers = memberRepository.findMemberCustom();
+
+        //then
+        assertThat(findMembers.size()).isEqualTo(3);
+    }
+
+
+    @Test
+    @DisplayName("jpaEventBaseEntity")
+    void jpaEventBaseEntity() throws Exception {
+        //given
+        Member member = new Member("member1");
+        memberRepository.save(member);
+
+        //when
+        member.setUsername("member123");
+        Thread.sleep(1000);
+
+        //then
+        em.flush();
+        em.clear();
+
+        Member findMember = memberRepository.findById(member.getId()).get();
+        //then
+        System.out.println("findMember.createdDate = " +
+                findMember.getCreatedDate());
+//        System.out.println("findMember.updatedDate = " +
+//                findMember.getUpdatedDate());
+    }
+
+    @Test
+    @DisplayName("BaseEntity")
+    void baseEntity() throws Exception {
+        //given
+        Member member = new Member("member1");
+        memberRepository.save(member);
+
+        //when
+        member.setUsername("member123");
+        Thread.sleep(1000);
+
+        //then
+        em.flush();
+        em.clear();
+
+        Member findMember = memberRepository.findById(member.getId()).get();
+        System.out.println("findMember.createdDate = " +
+                findMember.getCreatedDate());
+        System.out.println("findMember.updatedDate = " +
+                findMember.getLastModifiedDate());
+        System.out.println("findMember.createdBy = " +
+                findMember.getCreatedBy());
+        System.out.println("findMember.lastModifiedBy = " +
+                findMember.getLastModifiedBy());
+    }
 }

@@ -11,7 +11,7 @@ import study.datajpa.entity.Member;
 
 import java.util.List;
 
-public interface MemberRepository extends JpaRepository<Member, Long> { // 여기 선언한 도메인 클래스
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberRepositoryCustom { // 여기 선언한 도메인 클래스
 
     /* 메서드 이름으로 쿼리 생성 */
     /* 이름과 나이를 기준으로 회원을 조회 */
