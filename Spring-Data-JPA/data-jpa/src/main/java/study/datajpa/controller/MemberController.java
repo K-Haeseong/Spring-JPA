@@ -43,7 +43,7 @@ public class MemberController {
         return pageDto;
     }
 
-    /* 페이징과 정렬 - @PageableDefault 사용 X */
+    /* 페이징과 정렬 - @PageableDefault 사용 O */
     @GetMapping("/members_page")
     public Page<Member> membersPage(@PageableDefault(page = 1, size = 15,
             sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
