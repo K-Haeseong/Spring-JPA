@@ -1,32 +1,34 @@
 package study.querydsl;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
-import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceUnit;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
+import study.querydsl.dto.MemberDto;
+import study.querydsl.dto.QMemberDto;
+import study.querydsl.dto.UserDto;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
-import study.querydsl.entity.QTeam;
 import study.querydsl.entity.Team;
 
 import java.util.List;
 
-import static com.querydsl.jpa.JPAExpressions.*;
-import static org.assertj.core.api.Assertions.*;
-import static study.querydsl.entity.QMember.*;
-import static study.querydsl.entity.QTeam.*;
+import static com.querydsl.jpa.JPAExpressions.select;
+import static org.assertj.core.api.Assertions.assertThat;
+import static study.querydsl.entity.QMember.member;
+import static study.querydsl.entity.QTeam.team;
 
 @SpringBootTest
 @Transactional
@@ -59,7 +61,9 @@ public class QuerydslBasicTest {
         em.persist(member4);
     }
 
-
+    /**
+     * 기본 문법
+     */
     @Test
     @DisplayName("JPQL")
     void startJPQL() {
@@ -479,21 +483,210 @@ public class QuerydslBasicTest {
             System.out.println("tuple = " + tuple);
         }
     }
-    
+
+    /**
+     * 10 -> 열살 
+     * 20 -> 스무살
+     * 나머지는  -> 기타
+     * 이렇게 바꿔 출력하기
+     */
     @Test
-    @DisplayName("Test name")
-    void testName() throws Exception {
-        //given
-        
+    @DisplayName("simpleCase")
+    void simpleCase() throws Exception {
         //when
-        
+        List<String> result = queryFactory
+                .select(member.age
+                        .when(10).then("열살")
+                        .when(20).then("스무살")
+                        .otherwise("기타"))
+                .from(member)
+                .fetch();
+
+        for (String memberAge : result) {
+            System.out.println("memberAge = " + memberAge);
+        }
+
         //then
+        assertThat(result.get(0)).isEqualTo("열살");
+        assertThat(result.get(1)).isEqualTo("스무살");
+    }
+
+    @Test
+    @DisplayName("CaseBuilder")
+    void caseBuilder_use() throws Exception {
+        //when
+        StringExpression ageRange = new CaseBuilder()
+                .when(member.age.between(0, 20)).then("0~20살")
+                .when(member.age.between(21, 30)).then("21살~30살")
+                .otherwise("기타");
+
+        List<String> result = queryFactory
+                .select(ageRange)
+                .from(member)
+                .fetch();
+
+        //then
+        assertThat(result.get(0)).isEqualTo("0~20살");
+        assertThat(result.get(1)).isEqualTo("0~20살");
+        assertThat(result.get(2)).isEqualTo("21살~30살");
+        assertThat(result.get(3)).isEqualTo("기타");
     }
 
 
+    /**
+     * 중급 문법
+     */
+
+
+    /**
+     *  순수 JPA에서 DTO로 결과 반환
+     */
+    @Test
+    @DisplayName("JPA_DTO")
+    void jpaDto() {
+        //when
+        List<MemberDto> result = em.createQuery("select new study.querydsl.dto.MemberDto(m.username, m.age) " +
+                        "from Member m", MemberDto.class)
+                .getResultList();
+
+        for (MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * Querydsl 빈 생성을 통한 DTO 결과 반환
+     */
+    @Test
+    @DisplayName("Querydsl 빈 생성 - 프로퍼티 접근")
+    void querydsl_dto_property() {
+        //when
+        List<MemberDto> result = queryFactory
+                .select(Projections.bean(MemberDto.class, member.username, member.age))
+                .from(member)
+                .fetch();
+        
+        for(MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    @Test
+    @DisplayName("Querydsl 빈 생성 - 필드 접근")
+    void querydsl_dto_field() {
+        //when
+//        List<MemberDto> result = queryFactory
+//                .select(Projections.fields(MemberDto.class, member.username, member.age))
+        List<UserDto> result = queryFactory
+                .select(Projections.fields(UserDto.class, member.username.as("name"), member.age.as("userAge")))
+                .from(member)
+                .fetch();
+
+        for(UserDto userDto : result) {
+            System.out.println("userDto = " + userDto);
+        }
+    }
+
+    @Test
+    @DisplayName("Querydsl 빈 생성 - 생성자 접근")
+    void querydsl_dto_constructor() {
+        //when
+//        List<MemberDto> result = queryFactory
+//                .select(Projections.fields(MemberDto.class, member.username, member.age))
+        List<UserDto> result = queryFactory
+                .select(Projections.constructor(UserDto.class, member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for(UserDto userDto : result) {
+            System.out.println("userDto = " + userDto);
+        }
+    }
+
+    /**
+     * @QueryProjection을 활용한 DTO 반환
+     */
+    @Test
+    @DisplayName("QueryProjection 사용하기")
+    void queryProjection_use() {
+        //when
+        List<MemberDto> result = queryFactory
+                .select(new QMemberDto(member.username, member.age))
+                .from(member)
+                .fetch();
+
+        for(MemberDto memberDto : result) {
+            System.out.println("memberDto = " + memberDto);
+        }
+    }
+
+    /**
+     * distinct
+     */
+    @Test
+    @DisplayName("distinct")
+    void distinct() {
+        //when
+        List<Tuple> result = queryFactory
+                .select(team, member)
+                .from(team)
+                .innerJoin(team.members, member)
+                .fetch();
+
+        System.out.println("=============================");
+        for (Tuple tuple : result) {
+            System.out.println("tuple1 = " + tuple);
+        }
+        System.out.println("=============================");
 
 
 
+        List<Tuple> result2 = queryFactory
+                .select(team, member).distinct()
+                .from(team)
+                .innerJoin(team.members, member)
+                .fetch();
+
+        System.out.println("=============================");
+        for (Tuple tuple : result2) {
+            System.out.println("tuple2 = " + tuple);
+        }
+        System.out.println("=============================");
+    }
+
+
+    @Test
+    @DisplayName("builder 사용")
+    void builder() throws Exception {
+        //given
+        String usernameParam = "member1";
+        int ageParam = 10;
+
+        //then
+        List<Member> result = searchMember1(usernameParam, ageParam);
+
+        //when
+        assertThat(result.size()).isEqualTo(1);
+
+    }
+
+    private List<Member> searchMember1(String usernameParam, int ageParam) {
+        BooleanBuilder builder = new BooleanBuilder();
+        if(usernameParam != null) {
+            builder.and(member.username.eq(usernameParam));
+        }
+        if(ageParam > 0) {
+            builder.and(member.age.eq(ageParam));
+        }
+
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member)
+                .where(builder)
+                .fetch();
+
+        return result;
+    }
 
 
 }
